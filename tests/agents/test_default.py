@@ -1,6 +1,6 @@
 import pytest
 
-from minisweagent.agents.default import DefaultAgent, NonTerminatingException
+from minisweagent.agents.default import DefaultAgent, FormatError, NonTerminatingException
 from minisweagent.environments.local import LocalEnvironment
 from minisweagent.models.test_models import DeterministicModel
 
@@ -248,3 +248,34 @@ def test_render_template_model_stats():
     result = agent.render_template(template)
 
     assert result == "Calls: 2, Cost: 2.0"
+
+
+def test_agent_is_created():
+    """Trivial smoke test."""
+    agent = DefaultAgent(
+        model=DeterministicModel(outputs=[]),
+        env=LocalEnvironment(),
+    )
+    assert agent is not None
+
+
+@pytest.mark.parametrize("bad_content, expected_exc", [
+    ("no backticks at all", FormatError),
+    ("```python\nprint('hi')\n```", FormatError),
+])
+def test_parse_action_parametrized(bad_content, expected_exc):
+    agent = DefaultAgent(model=DeterministicModel(outputs=[]), env=LocalEnvironment())
+    with pytest.raises(expected_exc):
+        agent.parse_action({"content": bad_content})
+
+
+def test_run_returns_exit_status():
+    agent = DefaultAgent(
+        model=DeterministicModel(
+            outputs=["```bash\necho 'COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT'\necho 'done'\n```"]
+        ),
+        env=LocalEnvironment(),
+    )
+    status, output = agent.run("finish now")
+    result = status
+    assert result == "Submitted"

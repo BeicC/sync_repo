@@ -4,6 +4,7 @@ import re
 import subprocess
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
+from typing import List
 
 from jinja2 import StrictUndefined, Template
 
@@ -56,7 +57,7 @@ class LimitsExceeded(TerminatingException):
 class DefaultAgent:
     def __init__(self, model: Model, env: Environment, *, config_class: Callable = AgentConfig, **kwargs):
         self.config = config_class(**kwargs)
-        self.messages: list[dict] = []
+        self.messages: List[dict] = []
         self.model = model
         self.env = env
         self.extra_template_vars = {}
@@ -99,7 +100,8 @@ class DefaultAgent:
 
     def get_observation(self, response: dict) -> dict:
         """Execute the action and return the observation."""
-        output = self.execute_action(self.parse_action(response))
+        parsed = self.parse_action(response)
+        output = self.execute_action(parsed)
         observation = self.render_template(self.config.action_observation_template, output=output)
         self.add_message("user", observation)
         return output
