@@ -1,4 +1,5 @@
 # Mini-SWE-Agent OpenHarmony 扩展 - 快速开始
+update sth
 
 ## 安装
 
